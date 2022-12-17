@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -9,11 +10,22 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"tosinjs/cloud-backup/cmd/api/v1/routes"
+	"tosinjs/cloud-backup/internal/setup/aws"
 )
 
 func Setup() {
 	r := gin.New()
 	v1 := r.Group("/api/v1")
+
+	s3SVC, err := aws.NewS3Service()
+
+	if err != nil {
+		log.Fatalf("AWS SETUP ERROR %v", err)
+		os.Exit(1)
+	}
+
+	fmt.Println(s3SVC)
 
 	httpServer := http.Server{
 		Addr:        ":3000",
@@ -21,6 +33,12 @@ func Setup() {
 		IdleTimeout: 120 * time.Second,
 	}
 
+	//SETUP ROUTES
+
+	//File Routes
+	routes.FileRoutes(v1)
+
+	//Ping Route
 	v1.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusAccepted, "pong")
 	})
