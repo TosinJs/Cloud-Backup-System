@@ -4,26 +4,33 @@ import (
 	"fmt"
 	"mime/multipart"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
+	"tosinjs/cloud-backup/internal/entity/errorEntity"
 	"tosinjs/cloud-backup/internal/service/awsService"
 )
 
-type FileService struct {
+type fileService struct {
 	awsSVC awsService.AWSService
 }
 
+type FileService interface {
+	UploadFile(hFile *multipart.FileHeader, folderName string) *errorEntity.ServiceError
+	DeleteFile(folderName, filename string) *errorEntity.ServiceError
+	GetFile(folderName, filename string) ([]byte, *errorEntity.ServiceError)
+	DeleteFolder(folderName string) *errorEntity.ServiceError
+	ListFilesInFolder(folderName string) ([]string, *errorEntity.ServiceError)
+}
+
 func New(awsSVC awsService.AWSService) FileService {
-	return FileService{
+	return fileService{
 		awsSVC: awsSVC,
 	}
 }
 
-func (f FileService) UploadFile(hFile *multipart.FileHeader, folderName string) error {
+func (f fileService) UploadFile(hFile *multipart.FileHeader, folderName string) *errorEntity.ServiceError {
 	filename := hFile.Filename
 	file, err := hFile.Open()
 	if err != nil {
-		fmt.Println("error opening file")
-		return err
+		return errorEntity.InternalServerError(err)
 	}
 
 	defer file.Close()
@@ -34,23 +41,10 @@ func (f FileService) UploadFile(hFile *multipart.FileHeader, folderName string) 
 		filename = fmt.Sprintf("%s/%s", "username", filename)
 	}
 
-	err = f.awsSVC.UploadFile(file, filename)
-	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			default:
-				fmt.Println(aerr.Error())
-			}
-		} else {
-			fmt.Println(err.Error())
-		}
-		return err
-	}
-
-	return nil
+	return f.awsSVC.UploadFile(file, filename)
 }
 
-func (f *FileService) DeleteFile(folderName, filename string) error {
+func (f fileService) DeleteFile(folderName, filename string) *errorEntity.ServiceError {
 
 	fileName := fmt.Sprintf("%s/", "username")
 
@@ -62,18 +56,10 @@ func (f *FileService) DeleteFile(folderName, filename string) error {
 		fileName = fmt.Sprintf("%s%s", fileName, filename)
 	}
 
-	fmt.Println(folderName, filename)
-	fmt.Println(fileName)
-
-	err := f.awsSVC.DeleteFile(fileName)
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-	return nil
+	return f.awsSVC.DeleteFile(fileName)
 }
 
-func (f *FileService) GetFile(folderName, filename string) ([]byte, error) {
+func (f fileService) GetFile(folderName, filename string) ([]byte, *errorEntity.ServiceError) {
 	fileName := fmt.Sprintf("%s/", "username")
 
 	if folderName != "" {
@@ -84,43 +70,25 @@ func (f *FileService) GetFile(folderName, filename string) ([]byte, error) {
 		fileName = fmt.Sprintf("%s%s", fileName, filename)
 	}
 
-	fmt.Println(folderName, filename)
-	fmt.Println(fileName)
-
-	data, err := f.awsSVC.GetFile(fileName)
-	if err != nil {
-		fmt.Println(err)
-		return []byte{}, err
-	}
-	return data, nil
+	return f.awsSVC.GetFile(fileName)
 }
 
-func (f *FileService) ListFilesInFolder(folderName string) ([]string, error) {
+func (f fileService) ListFilesInFolder(folderName string) ([]string, *errorEntity.ServiceError) {
 	fileName := fmt.Sprintf("%s/", "username")
 
 	if folderName != "" {
 		fileName = fmt.Sprintf("%s%s/", fileName, folderName)
 	}
 
-	fileStructure, err := f.awsSVC.ListFilesInFolder(fileName)
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
-	return fileStructure, nil
+	return f.awsSVC.ListFilesInFolder(fileName)
 }
 
-func (f *FileService) DeleteFolder(folderName string) error {
+func (f fileService) DeleteFolder(folderName string) *errorEntity.ServiceError {
 	fileName := fmt.Sprintf("%s/", "username")
 
 	if folderName != "" {
 		fileName = fmt.Sprintf("%s%s/", fileName, folderName)
 	}
 
-	err := f.awsSVC.DeleteFolder(fileName)
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-	return nil
+	return f.awsSVC.DeleteFolder(fileName)
 }

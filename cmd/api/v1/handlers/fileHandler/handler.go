@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"tosinjs/cloud-backup/internal/entity/responseEntity"
 	"tosinjs/cloud-backup/internal/service/fileService"
 )
 
@@ -24,25 +25,27 @@ func (f fileHandler) UploadFile(c *gin.Context) {
 
 	file, err := c.FormFile("file")
 	if err != nil {
-		fmt.Println("No File Sent With This Request")
+		c.AbortWithStatusJSON(http.StatusBadRequest, responseEntity.BuildErrorResponseObject(
+			http.StatusBadRequest, "No File Sent With This Request", c.FullPath(),
+		))
 		return
 	}
 
-	if err = f.fileSVC.UploadFile(file, folderName); err != nil {
-		fmt.Println(err)
+	if srvErr := f.fileSVC.UploadFile(file, folderName); srvErr != nil {
+		c.AbortWithStatusJSON(srvErr.StatusCode, responseEntity.BuildServiceErrorResponseObject(srvErr, c.FullPath()))
 		return
 	}
 
-	c.JSON(http.StatusAccepted, "uploaded")
+	c.JSON(http.StatusCreated, responseEntity.BuildResponseObject(http.StatusCreated, c.FullPath(), nil))
 }
 
 func (f fileHandler) GetFile(c *gin.Context) {
 	folderName := c.Query("folder")
 	fileName := c.Query("filename")
 
-	data, err := f.fileSVC.GetFile(folderName, fileName)
-	if err != nil {
-		fmt.Println(err)
+	data, srvErr := f.fileSVC.GetFile(folderName, fileName)
+	if srvErr != nil {
+		c.AbortWithStatusJSON(srvErr.StatusCode, responseEntity.BuildServiceErrorResponseObject(srvErr, c.FullPath()))
 		return
 	}
 
@@ -54,33 +57,33 @@ func (f fileHandler) DeleteFile(c *gin.Context) {
 	folderName := c.Query("folder")
 	fileName := c.Query("filename")
 
-	if err := f.fileSVC.DeleteFile(folderName, fileName); err != nil {
-		fmt.Println(err)
+	if srvErr := f.fileSVC.DeleteFile(folderName, fileName); srvErr != nil {
+		c.AbortWithStatusJSON(srvErr.StatusCode, responseEntity.BuildServiceErrorResponseObject(srvErr, c.FullPath()))
 		return
 	}
 
-	c.JSON(http.StatusAccepted, "deleted")
+	c.JSON(http.StatusAccepted, responseEntity.BuildResponseObject(http.StatusAccepted, c.FullPath(), nil))
 }
 
 func (f fileHandler) DeleteFolder(c *gin.Context) {
 	folderName := c.Query("folder")
 
-	err := f.fileSVC.DeleteFolder(folderName)
-	if err != nil {
-		fmt.Println(err)
+	if srvErr := f.fileSVC.DeleteFolder(folderName); srvErr != nil {
+		c.AbortWithStatusJSON(srvErr.StatusCode, responseEntity.BuildServiceErrorResponseObject(srvErr, c.FullPath()))
 		return
 	}
 
-	c.JSON(http.StatusAccepted, "deleted")
+	c.JSON(http.StatusAccepted, responseEntity.BuildResponseObject(http.StatusAccepted, c.FullPath(), nil))
 }
 
 func (f fileHandler) ListFilesInFolder(c *gin.Context) {
 	folderName := c.Query("folder")
 
-	fileStructure, err := f.fileSVC.ListFilesInFolder(folderName)
-	if err != nil {
-		fmt.Println(err)
+	fileStructure, srvErr := f.fileSVC.ListFilesInFolder(folderName)
+	if srvErr != nil {
+		c.AbortWithStatusJSON(srvErr.StatusCode, responseEntity.BuildServiceErrorResponseObject(srvErr, c.FullPath()))
 		return
 	}
-	c.JSON(http.StatusOK, fileStructure)
+
+	c.JSON(http.StatusOK, responseEntity.BuildResponseObject(http.StatusOK, c.FullPath(), fileStructure))
 }
