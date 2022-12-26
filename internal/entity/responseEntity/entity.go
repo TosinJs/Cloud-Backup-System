@@ -32,7 +32,7 @@ func BuildServiceErrorResponseObject(err *errorEntity.ServiceError, path string)
 	return ResponseEntity{
 		StatusCode: err.StatusCode,
 		Message:    "failed",
-		Error:      err.Message,
+		Error:      err.Error(),
 		Path:       path,
 	}
 }

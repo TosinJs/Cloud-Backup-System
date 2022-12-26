@@ -7,20 +7,24 @@ import (
 
 type ServiceError struct {
 	StatusCode int
-	Message    string
-	Err        error
+	message    string
+	err        error
 }
 
 func (se ServiceError) Error() string {
-	return fmt.Sprintf("Error: %s /n %v", se.Message, se.Err)
+	return fmt.Sprintf("Error: %s", se.message)
 }
 
 func New(statusCode int, message string, err error) *ServiceError {
 	return &ServiceError{
 		StatusCode: statusCode,
-		Message:    message,
-		Err:        err,
+		message:    message,
+		err:        err,
 	}
+}
+
+func ConflictError(message string, err error) *ServiceError {
+	return New(http.StatusConflict, message, err)
 }
 
 func InternalServerError(err error) *ServiceError {

@@ -10,25 +10,49 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"tosinjs/cloud-backup/cmd/api/v1/routes"
+	mySqlUserRepo "tosinjs/cloud-backup/internal/repository/userRepo/mySqlRepo"
 	"tosinjs/cloud-backup/internal/service/awsService"
+	"tosinjs/cloud-backup/internal/service/cryptoService"
 	"tosinjs/cloud-backup/internal/service/fileService"
+	"tosinjs/cloud-backup/internal/service/userService"
+	"tosinjs/cloud-backup/internal/service/validationService"
 	"tosinjs/cloud-backup/internal/setup/aws"
+	"tosinjs/cloud-backup/internal/setup/database/mySql"
 )
 
 func Setup() {
 	r := gin.New()
 	v1 := r.Group("/api/v1")
 
-	s3, err := aws.NewS3Service()
+	connFactory, err := mySql.NewMySQLServer("")
+	if err != nil {
+		log.Fatalf("MYSQL SETUP ERROR %v", err)
+		os.Exit(1)
+	}
 
+	defer connFactory.Close()
+	conn := connFactory.GetConn()
+
+	if err := conn.Ping(); err != nil {
+		log.Fatalf("MYSQL SETUP ERROR %v", err)
+		os.Exit(1)
+	}
+
+	s3, err := aws.NewS3Service()
 	if err != nil {
 		log.Fatalf("AWS SETUP ERROR %v", err)
 		os.Exit(1)
 	}
 
+	//Repository Setups
+	userRepo := mySqlUserRepo.New(conn)
+
 	//Service Setup
 	awsSVC := awsService.New(s3)
 	fileSVC := fileService.New(awsSVC)
+	cryptoSVC := cryptoService.New()
+	validationSVC := validationService.New()
+	userSVC := userService.New(userRepo, cryptoSVC)
 
 	httpServer := http.Server{
 		Addr:        ":3000",
@@ -40,6 +64,9 @@ func Setup() {
 
 	//File Routes
 	routes.FileRoutes(v1, fileSVC)
+
+	//User Routes
+	routes.UserRoutes(v1, userSVC, validationSVC)
 
 	//Ping Route
 	v1.GET("/ping", func(c *gin.Context) {
