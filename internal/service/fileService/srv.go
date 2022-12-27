@@ -13,11 +13,11 @@ type fileService struct {
 }
 
 type FileService interface {
-	UploadFile(hFile *multipart.FileHeader, folderName string) *errorEntity.ServiceError
-	DeleteFile(folderName, filename string) *errorEntity.ServiceError
-	GetFile(folderName, filename string) ([]byte, *errorEntity.ServiceError)
-	DeleteFolder(folderName string) *errorEntity.ServiceError
-	ListFilesInFolder(folderName string) ([]string, *errorEntity.ServiceError)
+	UploadFile(hFile *multipart.FileHeader, username, folderName string) *errorEntity.ServiceError
+	DeleteFile(username, folderName, filename string) *errorEntity.ServiceError
+	GetFile(username, folderName, filename string) ([]byte, *errorEntity.ServiceError)
+	DeleteFolder(username, folderName string) *errorEntity.ServiceError
+	ListFilesInFolder(username, folderName string) ([]string, *errorEntity.ServiceError)
 }
 
 func New(awsSVC awsService.AWSService) FileService {
@@ -26,7 +26,7 @@ func New(awsSVC awsService.AWSService) FileService {
 	}
 }
 
-func (f fileService) UploadFile(hFile *multipart.FileHeader, folderName string) *errorEntity.ServiceError {
+func (f fileService) UploadFile(hFile *multipart.FileHeader, username, folderName string) *errorEntity.ServiceError {
 	filename := hFile.Filename
 	file, err := hFile.Open()
 	if err != nil {
@@ -36,17 +36,17 @@ func (f fileService) UploadFile(hFile *multipart.FileHeader, folderName string) 
 	defer file.Close()
 
 	if folderName != "" {
-		filename = fmt.Sprintf("%s/%s/%s", "username", folderName, filename)
+		filename = fmt.Sprintf("%s/%s/%s", username, folderName, filename)
 	} else {
-		filename = fmt.Sprintf("%s/%s", "username", filename)
+		filename = fmt.Sprintf("%s/%s", username, filename)
 	}
 
 	return f.awsSVC.UploadFile(file, filename)
 }
 
-func (f fileService) DeleteFile(folderName, filename string) *errorEntity.ServiceError {
+func (f fileService) DeleteFile(username, folderName, filename string) *errorEntity.ServiceError {
 
-	fileName := fmt.Sprintf("%s/", "username")
+	fileName := fmt.Sprintf("%s/", username)
 
 	if folderName != "" {
 		fileName = fmt.Sprintf("%s%s/", fileName, folderName)
@@ -59,8 +59,8 @@ func (f fileService) DeleteFile(folderName, filename string) *errorEntity.Servic
 	return f.awsSVC.DeleteFile(fileName)
 }
 
-func (f fileService) GetFile(folderName, filename string) ([]byte, *errorEntity.ServiceError) {
-	fileName := fmt.Sprintf("%s/", "username")
+func (f fileService) GetFile(username, folderName, filename string) ([]byte, *errorEntity.ServiceError) {
+	fileName := fmt.Sprintf("%s/", username)
 
 	if folderName != "" {
 		fileName = fmt.Sprintf("%s%s/", fileName, folderName)
@@ -73,8 +73,8 @@ func (f fileService) GetFile(folderName, filename string) ([]byte, *errorEntity.
 	return f.awsSVC.GetFile(fileName)
 }
 
-func (f fileService) ListFilesInFolder(folderName string) ([]string, *errorEntity.ServiceError) {
-	fileName := fmt.Sprintf("%s/", "username")
+func (f fileService) ListFilesInFolder(username, folderName string) ([]string, *errorEntity.ServiceError) {
+	fileName := fmt.Sprintf("%s/", username)
 
 	if folderName != "" {
 		fileName = fmt.Sprintf("%s%s/", fileName, folderName)
@@ -83,8 +83,8 @@ func (f fileService) ListFilesInFolder(folderName string) ([]string, *errorEntit
 	return f.awsSVC.ListFilesInFolder(fileName)
 }
 
-func (f fileService) DeleteFolder(folderName string) *errorEntity.ServiceError {
-	fileName := fmt.Sprintf("%s/", "username")
+func (f fileService) DeleteFolder(username, folderName string) *errorEntity.ServiceError {
+	fileName := fmt.Sprintf("%s/", username)
 
 	if folderName != "" {
 		fileName = fmt.Sprintf("%s%s/", fileName, folderName)

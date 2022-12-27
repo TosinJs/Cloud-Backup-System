@@ -9,6 +9,7 @@ type UserSignUpReq struct {
 }
 
 type UserSignUpRes struct {
+	Token string `json:"token"`
 }
 
 type UserLoginReq struct {
@@ -16,5 +17,11 @@ type UserLoginReq struct {
 	Password string `json:"password"`
 }
 
-type UserLoginUpRes struct {
+type UserLoginRes struct {
+	Token string `json:"token"`
+}
+
+type UserLoginRepoRes struct {
+	Password string `json:"-"`
+	Status   string `json:"-"`
 }

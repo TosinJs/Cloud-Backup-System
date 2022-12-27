@@ -20,6 +20,7 @@ func NewHandler(fileSVC fileService.FileService) *fileHandler {
 }
 
 func (f fileHandler) UploadFile(c *gin.Context) {
+	username := c.GetString("username")
 
 	folderName := c.Query("folder")
 
@@ -31,7 +32,7 @@ func (f fileHandler) UploadFile(c *gin.Context) {
 		return
 	}
 
-	if srvErr := f.fileSVC.UploadFile(file, folderName); srvErr != nil {
+	if srvErr := f.fileSVC.UploadFile(file, username, folderName); srvErr != nil {
 		c.AbortWithStatusJSON(srvErr.StatusCode, responseEntity.BuildServiceErrorResponseObject(srvErr, c.FullPath()))
 		return
 	}
@@ -40,10 +41,11 @@ func (f fileHandler) UploadFile(c *gin.Context) {
 }
 
 func (f fileHandler) GetFile(c *gin.Context) {
+	username := c.GetString("username")
 	folderName := c.Query("folder")
 	fileName := c.Query("filename")
 
-	data, srvErr := f.fileSVC.GetFile(folderName, fileName)
+	data, srvErr := f.fileSVC.GetFile(username, folderName, fileName)
 	if srvErr != nil {
 		c.AbortWithStatusJSON(srvErr.StatusCode, responseEntity.BuildServiceErrorResponseObject(srvErr, c.FullPath()))
 		return
@@ -54,10 +56,11 @@ func (f fileHandler) GetFile(c *gin.Context) {
 }
 
 func (f fileHandler) DeleteFile(c *gin.Context) {
+	username := c.GetString("username")
 	folderName := c.Query("folder")
 	fileName := c.Query("filename")
 
-	if srvErr := f.fileSVC.DeleteFile(folderName, fileName); srvErr != nil {
+	if srvErr := f.fileSVC.DeleteFile(username, folderName, fileName); srvErr != nil {
 		c.AbortWithStatusJSON(srvErr.StatusCode, responseEntity.BuildServiceErrorResponseObject(srvErr, c.FullPath()))
 		return
 	}
@@ -66,9 +69,10 @@ func (f fileHandler) DeleteFile(c *gin.Context) {
 }
 
 func (f fileHandler) DeleteFolder(c *gin.Context) {
+	username := c.GetString("username")
 	folderName := c.Query("folder")
 
-	if srvErr := f.fileSVC.DeleteFolder(folderName); srvErr != nil {
+	if srvErr := f.fileSVC.DeleteFolder(username, folderName); srvErr != nil {
 		c.AbortWithStatusJSON(srvErr.StatusCode, responseEntity.BuildServiceErrorResponseObject(srvErr, c.FullPath()))
 		return
 	}
@@ -77,9 +81,10 @@ func (f fileHandler) DeleteFolder(c *gin.Context) {
 }
 
 func (f fileHandler) ListFilesInFolder(c *gin.Context) {
+	username := c.GetString("username")
 	folderName := c.Query("folder")
 
-	fileStructure, srvErr := f.fileSVC.ListFilesInFolder(folderName)
+	fileStructure, srvErr := f.fileSVC.ListFilesInFolder(username, folderName)
 	if srvErr != nil {
 		c.AbortWithStatusJSON(srvErr.StatusCode, responseEntity.BuildServiceErrorResponseObject(srvErr, c.FullPath()))
 		return

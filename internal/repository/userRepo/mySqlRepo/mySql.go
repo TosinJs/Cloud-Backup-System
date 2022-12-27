@@ -37,18 +37,18 @@ func (m mySql) CreateUser(req userEntity.UserSignUpReq) *errorEntity.ServiceErro
 	return nil
 }
 
-func (m mySql) LoginUser(req userEntity.UserLoginReq) (string, *errorEntity.ServiceError) {
+func (m mySql) LoginUser(req userEntity.UserLoginReq) (*userEntity.UserLoginRepoRes, *errorEntity.ServiceError) {
 	stmt := fmt.Sprintf(`
-		SELECT password FROM Users WHERE username = '%v'
+		SELECT password, status FROM Users WHERE username = '%v'
 		`, req.Username)
 
-	var password string
-	err := m.conn.QueryRow(stmt).Scan(&password)
+	var userDetails userEntity.UserLoginRepoRes
+	err := m.conn.QueryRow(stmt).Scan(&userDetails.Password, &userDetails.Status)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			return "", errorEntity.NotFoundError("Invalid Login Credentials", err)
+			return nil, errorEntity.NotFoundError("Invalid Login Credentials", err)
 		}
-		return "", errorEntity.InternalServerError(err)
+		return nil, errorEntity.InternalServerError(err)
 	}
-	return password, nil
+	return &userDetails, nil
 }

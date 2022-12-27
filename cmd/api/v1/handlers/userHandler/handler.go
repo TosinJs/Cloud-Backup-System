@@ -38,14 +38,16 @@ func (u userHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	if svcErr := u.userSVC.CreateUser(req); svcErr != nil {
+	userDetails, svcErr := u.userSVC.CreateUser(req)
+
+	if svcErr != nil {
 		c.AbortWithStatusJSON(svcErr.StatusCode, responseEntity.BuildServiceErrorResponseObject(
 			svcErr, c.FullPath(),
 		))
 		return
 	}
 
-	c.JSON(http.StatusCreated, responseEntity.BuildResponseObject(http.StatusCreated, c.FullPath(), nil))
+	c.JSON(http.StatusCreated, responseEntity.BuildResponseObject(http.StatusCreated, c.FullPath(), userDetails))
 }
 
 func (u userHandler) LoginUser(c *gin.Context) {
@@ -65,13 +67,15 @@ func (u userHandler) LoginUser(c *gin.Context) {
 		return
 	}
 
-	if svcErr := u.userSVC.LoginUser(req); svcErr != nil {
+	userDetails, svcErr := u.userSVC.LoginUser(req)
+
+	if svcErr != nil {
 		c.AbortWithStatusJSON(svcErr.StatusCode, responseEntity.BuildServiceErrorResponseObject(
 			svcErr, c.FullPath(),
 		))
 		return
 	}
 
-	c.JSON(http.StatusCreated, responseEntity.BuildResponseObject(http.StatusCreated, c.FullPath(), nil))
+	c.JSON(http.StatusCreated, responseEntity.BuildResponseObject(http.StatusCreated, c.FullPath(), userDetails))
 
 }

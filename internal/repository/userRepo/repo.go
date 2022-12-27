@@ -7,5 +7,5 @@ import (
 
 type UserRepository interface {
 	CreateUser(req userEntity.UserSignUpReq) *errorEntity.ServiceError
-	LoginUser(req userEntity.UserLoginReq) (string, *errorEntity.ServiceError)
+	LoginUser(req userEntity.UserLoginReq) (*userEntity.UserLoginRepoRes, *errorEntity.ServiceError)
 }
