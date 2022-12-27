@@ -26,4 +26,6 @@ func FileRoutes(v1 *gin.RouterGroup, fileSVC fileService.FileService, authSVC au
 	fileRoutes.GET("/list", fileHandler.ListFilesInFolder)
 
 	fileRoutes.DELETE("/list", fileHandler.DeleteFolder)
+
+	fileRoutes.PATCH("/flag", authMiddyWare.CheckAdminStatus(), fileHandler.FlagFile)
 }

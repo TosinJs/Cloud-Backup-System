@@ -65,7 +65,6 @@ func (u userService) LoginUser(req userEntity.UserLoginReq) (*userEntity.UserLog
 	if !u.cryptoSVC.Compare(req.Password, userDetails.Password) {
 		return nil, errorEntity.BadRequestError("Invalid Login Credentials", fmt.Errorf("invalid login credentials"))
 	}
-
 	token, srvErr := u.authSVC.GenerateJWT(60, tokenEntity.JWTPayload{
 		Username: req.Username,
 		Status:   userDetails.Status,

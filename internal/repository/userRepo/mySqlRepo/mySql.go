@@ -21,9 +21,9 @@ func New(conn *sql.DB) userRepo.UserRepository {
 
 func (m mySql) CreateUser(req userEntity.UserSignUpReq) *errorEntity.ServiceError {
 	stmt := fmt.Sprintf(`
-		INSERT INTO Users(user_id, username, password, email) 
-		VALUES('%v', '%v', '%v', '%v')
-		`, req.UserId, req.Username, req.Password, req.Email)
+		INSERT INTO Users(username, password, email) 
+		VALUES('%v', '%v', '%v')
+		`, req.Username, req.Password, req.Email)
 
 	_, err := m.conn.Exec(stmt)
 	if err != nil {

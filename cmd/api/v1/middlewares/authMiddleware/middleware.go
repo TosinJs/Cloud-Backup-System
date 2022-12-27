@@ -18,6 +18,21 @@ func New(authSVC authService.AuthService) authMiddleware {
 	}
 }
 
+func (a authMiddleware) CheckAdminStatus() gin.HandlerFunc {
+	fn := func(c *gin.Context) {
+		status := c.GetString("user-status")
+
+		if status != "admin" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, responseEntity.BuildErrorResponseObject(
+				http.StatusUnauthorized, "Unauthorized", c.FullPath(),
+			))
+			return
+		}
+		c.Next()
+	}
+	return fn
+}
+
 func (a authMiddleware) VerifyJWT() gin.HandlerFunc {
 	fn := func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")

@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"tosinjs/cloud-backup/cmd/api/v1/routes"
+	mySqlFileRepo "tosinjs/cloud-backup/internal/repository/fileRepo/mySqlRepo"
 	mySqlUserRepo "tosinjs/cloud-backup/internal/repository/userRepo/mySqlRepo"
 	"tosinjs/cloud-backup/internal/service/authService"
 	"tosinjs/cloud-backup/internal/service/awsService"
@@ -47,10 +48,11 @@ func Setup() {
 
 	//Repository Setups
 	userRepo := mySqlUserRepo.New(conn)
+	fileRepo := mySqlFileRepo.New(conn)
 
 	//Service Setup
 	awsSVC := awsService.New(s3)
-	fileSVC := fileService.New(awsSVC)
+	fileSVC := fileService.New(awsSVC, fileRepo)
 	cryptoSVC := cryptoService.New()
 	validationSVC := validationService.New()
 	authSVC := authService.New("")

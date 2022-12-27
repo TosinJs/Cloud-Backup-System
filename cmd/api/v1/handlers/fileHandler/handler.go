@@ -19,6 +19,24 @@ func NewHandler(fileSVC fileService.FileService) *fileHandler {
 	}
 }
 
+func (f fileHandler) FlagFile(c *gin.Context) {
+	filename := c.Query("file")
+
+	if filename == "" {
+		c.AbortWithStatusJSON(http.StatusBadRequest, responseEntity.BuildErrorResponseObject(
+			http.StatusBadRequest, "No File Sent With This Request", c.FullPath(),
+		))
+		return
+	}
+
+	if srvErr := f.fileSVC.FlagFile(filename); srvErr != nil {
+		c.AbortWithStatusJSON(srvErr.StatusCode, responseEntity.BuildServiceErrorResponseObject(srvErr, c.FullPath()))
+		return
+	}
+
+	c.JSON(http.StatusAccepted, responseEntity.BuildResponseObject(http.StatusAccepted, c.FullPath(), nil))
+}
+
 func (f fileHandler) UploadFile(c *gin.Context) {
 	username := c.GetString("username")
 
