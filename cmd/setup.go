@@ -2,13 +2,13 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"tosinjs/cloud-backup/cmd/api/v1/routes"
 	mySqlFileRepo "tosinjs/cloud-backup/internal/repository/fileRepo/mySqlRepo"
 	mySqlUserRepo "tosinjs/cloud-backup/internal/repository/userRepo/mySqlRepo"
@@ -20,13 +20,22 @@ import (
 	"tosinjs/cloud-backup/internal/service/validationService"
 	"tosinjs/cloud-backup/internal/setup/aws"
 	"tosinjs/cloud-backup/internal/setup/database/mySql"
+	utils "tosinjs/cloud-backup/utils/config"
+
+	"github.com/gin-gonic/gin"
 )
 
 func Setup() {
+	config, err := utils.LoadConfig("./", "app", "env")
+	if err != nil {
+		log.Fatalf("Error GETIING CONFIG: %v", err)
+		os.Exit(1)
+	}
+
 	r := gin.New()
 	v1 := r.Group("/api/v1")
 
-	connFactory, err := mySql.NewMySQLServer("")
+	connFactory, err := mySql.NewMySQLServer(config.DSN)
 	if err != nil {
 		log.Fatalf("MYSQL SETUP ERROR %v", err)
 		os.Exit(1)
@@ -40,7 +49,10 @@ func Setup() {
 		os.Exit(1)
 	}
 
-	s3, err := aws.NewS3Service()
+	s3, err := aws.NewS3Service(
+		config.AWS_ID, config.AWS_SECRET,
+		config.AWS_TOKEN, config.AWS_REGION,
+	)
 	if err != nil {
 		log.Fatalf("AWS SETUP ERROR %v", err)
 		os.Exit(1)
@@ -55,11 +67,11 @@ func Setup() {
 	fileSVC := fileService.New(awsSVC, fileRepo)
 	cryptoSVC := cryptoService.New()
 	validationSVC := validationService.New()
-	authSVC := authService.New("")
+	authSVC := authService.New(config.JWTSECRET)
 	userSVC := userService.New(userRepo, cryptoSVC, authSVC)
 
 	httpServer := http.Server{
-		Addr:        ":3000",
+		Addr:        fmt.Sprintf(":%v", config.PORT),
 		Handler:     r,
 		IdleTimeout: 120 * time.Second,
 	}
@@ -78,10 +90,10 @@ func Setup() {
 	})
 
 	go func() {
-		log.Printf("Server Starting on Port: %v", 3000)
+		log.Printf("Server Starting on Port: %v", config.PORT)
 		err := httpServer.ListenAndServe()
 		if err != nil {
-			log.Printf("ERROR STARTING SERVER: %v", "PORT")
+			log.Printf("ERROR STARTING SERVER: %v", config.PORT)
 			os.Exit(1)
 		}
 	}()
